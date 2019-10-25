@@ -1,0 +1,16 @@
+[
+{
+  "modid": "mctsg",
+  "name": "Minecraft Townscape Generator",
+  "description": "A tool to generate a city with a single command.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Qwertzite"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
