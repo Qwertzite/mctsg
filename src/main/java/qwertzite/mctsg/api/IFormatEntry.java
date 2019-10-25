@@ -2,8 +2,6 @@ package qwertzite.mctsg.api;
 
 import java.io.File;
 
-import com.google.gson.JsonObject;
-
 public interface IFormatEntry<B extends IBuildingEntry> {
 
 	public boolean checkSuffix(File file);
