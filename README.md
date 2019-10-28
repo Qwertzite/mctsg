@@ -1,0 +1,2 @@
+# mctsg
+Minecraft Townscape Generator
