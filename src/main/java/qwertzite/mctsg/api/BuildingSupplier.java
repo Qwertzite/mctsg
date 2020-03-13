@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+
 public class BuildingSupplier {
 	private Random rand;
 	private List<Entry> entries;
@@ -12,12 +14,14 @@ public class BuildingSupplier {
 	
 	private Entry next;
 	
-	public BuildingSupplier(Collection<IBuildingEntry> in, Random rand) {
+	public BuildingSupplier(Collection<IBuildingEntry> in, Random rand, Object2IntMap<IBuildingEntry> override) {
 		this.entries = new LinkedList<>();
 		for (IBuildingEntry e : in) {
 			if (!e.isEnabled()) { continue; }
-			this.weightSum += e.getWeight();
-			this.entries.add(new Entry(e));
+			int weight = override.isEmpty() ? e.getWeight() : (override.containsKey(e) ? override.getInt(e) : 0);
+			if (weight <= 0) { continue; }
+			this.weightSum += weight;
+			this.entries.add(new Entry(e, weight));
 		}
 		this.rand = rand;
 		this.setNext();
@@ -31,11 +35,11 @@ public class BuildingSupplier {
 		if (this.weightSum > 0) {
 			int indx = this.rand.nextInt(this.weightSum);
 			for (Entry e : this.entries) {
-				if (e.entry.getWeight() > indx) {
+				if (e.getWeight() > indx) {
 					this.next = e;
 					break;
 				} else {
-					indx -= e.entry.getWeight();
+					indx -= e.getWeight();
 				}
 			}
 		}
@@ -80,10 +84,12 @@ public class BuildingSupplier {
 	private static class Entry {
 		private IBuildingEntry entry;
 		private int count;
+		private int weight;
 		
-		public Entry(IBuildingEntry entry) {
+		public Entry(IBuildingEntry entry, int weight) {
 			this.entry = entry;
 			this.count = 0;
+			this.weight = weight;
 		}
 		
 		public void incrementCount() {
@@ -95,7 +101,7 @@ public class BuildingSupplier {
 		}
 		
 		public int getWeight() {
-			return this.entry.getWeight();
+			return this.weight;
 		}
 	}
 }

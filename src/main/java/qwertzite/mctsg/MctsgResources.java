@@ -20,6 +20,7 @@ public class MctsgResources {
 	public static final String MAIN_DIR_NAME = "mctsg";
 	public static final String BUILDINGS_DIR_NAME = "buildings";
 	public static final String BUILDING_SETTING_NAME = "building_settings" + JSON_SUFFIX;
+	public static final String DEFAULT_WEIGHT = "default_weight";
 	public static final File MAIN_DIR = new File(".", MAIN_DIR_NAME);
 	public static final File BUILDINGS = new File(MAIN_DIR, BUILDINGS_DIR_NAME);
 	public static final File BUIDING_SETTINGS = new File(MAIN_DIR, BUILDING_SETTING_NAME);
@@ -32,12 +33,22 @@ public class MctsgResources {
 		return BUILDINGS;
 	}
 	
-	public static JsonObject getBuildingSettingFile() {
-		return loadJsonObject(BUIDING_SETTINGS, "building setting file");
+	/**
+	 * 
+	 * @param folder the folder that the building file is in.
+	 * @return
+	 */
+	public static JsonObject getBuildingSetting(File folder) {
+		return loadJsonObject(getBuildingSettingFile(folder), "building setting file");
 	}
 	
-	public static void saveBuildingSettingFile(JsonObject jsonObj, boolean indent) {
-		saveJsonObject(BUIDING_SETTINGS, jsonObj, "building settings");
+	public static void saveBuildingSetting(JsonObject jsonObj, File folder, boolean indent) {
+		saveJsonObject(getBuildingSettingFile(folder), jsonObj, "building settings");
+	}
+	
+	public static File getBuildingSettingFile(File folder) {
+		String str = buildingFolderToString(folder);
+		return new File(MAIN_DIR, "building" + str + "_settings" + JSON_SUFFIX);
 	}
 	
 	public static JsonObject getPlanSetting(String name) {
@@ -54,8 +65,35 @@ public class MctsgResources {
 		return new File(MAIN_DIR, name + JSON_SUFFIX);
 	}
 	
+	public static JsonObject getBuildingWeightOverride(String name) {
+		File f = getBuildingWeightFile(name);
+		return loadJsonObject(f, "Buiding weight override: " + name, false);
+	}
+	
+	public static boolean defaultFWeightFileExists() {
+		return getDefaultWeightFile().exists();
+	}
+	
+	public static void saveDefaultWeight(JsonObject obj) {
+		File file = getDefaultWeightFile();
+		saveJsonObject(file, obj, "Generating building weight template");
+	}
+	
+	private static File getDefaultWeightFile() {
+		return getBuildingWeightFile(DEFAULT_WEIGHT);
+	}
+	
+	private static File getBuildingWeightFile(String name) {
+		return new File(MAIN_DIR, name + JSON_SUFFIX);
+	}
+	
 	private static JsonObject loadJsonObject(File file, String name) {
+		return loadJsonObject(file, name, true);
+	}
+	
+	private static JsonObject loadJsonObject(File file, String name, boolean createIfNotExtist) {
 		if (!file.exists()) {
+			if (!createIfNotExtist) return null;
 			try {
 				file.getParentFile().mkdirs();
 				file.createNewFile();
@@ -95,5 +133,22 @@ public class MctsgResources {
 		} catch (IOException e) {
 			ModLog.warn("Could not save " + name, e);
 		}
+	}
+	
+	/**
+	 * 建物の json obj のkey
+	 * @param file
+	 * @return
+	 */
+	public static String buildingFileToString(File file) {
+		return file.getPath()
+				.substring(2 + MctsgResources.MAIN_DIR_NAME.length() + 1 + MctsgResources.BUILDINGS_DIR_NAME.length() + 1)
+				.replace("\\", "/");
+	}
+	
+	public static String buildingFolderToString(File folder) {
+		return folder.getPath()
+				.substring(2 + MctsgResources.MAIN_DIR_NAME.length() + 1 + MctsgResources.BUILDINGS_DIR_NAME.length())
+				.replace("\\", ".");
 	}
 }

@@ -22,8 +22,12 @@ public interface IBuildingEntry {
 	public boolean hasLimit();
 	/** The maximum number of this type of building. */
 	public int getLimit();
-	/** Get the weight for randomly selection buildings. Defaults to 100. */
+	/** Get the weight for randomly selecting buildings. Defaults to 100.
+	 *  Will be removed in Version 2.0
+	 */
+	@Deprecated
 	public int getWeight();
+	public default int getDefaultWeight() { return 100; }
 	/** 	建物の道に平行な向きの大きさ */
 	public int getWidth();
 	/** 	建物の道に直角な向きの大きさ */

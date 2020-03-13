@@ -9,8 +9,11 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -20,6 +23,7 @@ import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import qwertzite.mctsg.BuildingLoader;
 import qwertzite.mctsg.CityPlanLoader;
 import qwertzite.mctsg.MctsgResources;
 import qwertzite.mctsg.ModLog;
@@ -34,6 +38,7 @@ public class CommandGenerate extends CommandBase {
 	public static final String RANGE = "range";
 	public static final String POLICY = "policy";
 	public static final String SEED = "seed";
+	public static final String WEIGHT = "weight";
 	
 	@Override
 	public String getName() {
@@ -60,6 +65,8 @@ public class CommandGenerate extends CommandBase {
 		set.add(RANGE + "=-100,-100,100,100");
 		set.add(POLICY + "=");
 		set.add(SEED + "=");
+		set.add(WEIGHT + "=");
+		// TODO:
 //		for (String s : args) {
 //			String[] pair = s.split("=", 2);
 //			if (pair.length == 2) { set.remove(pair[0]); }
@@ -154,18 +161,37 @@ public class CommandGenerate extends CommandBase {
 		
 		if (!cityPlan.processCommandLineOverrides(arguments, sender)) { return; } // return if failed.
 		
+		Object2IntOpenHashMap<String> buildingWeightOverride = new Object2IntOpenHashMap<>();
+		if (arguments.containsKey(WEIGHT)) {
+			String override = arguments.get(WEIGHT);
+			JsonObject jsonObj = MctsgResources.getBuildingWeightOverride(override);
+			if (jsonObj == null) {
+				sender.sendMessage(new TextComponentString(
+						"Failed to load building weight from " + override + "\n" +
+						"Format: weight=<filename>.json (e.g. weight=my_custom_weight.json)\n").setStyle((new Style()).setColor(TextFormatting.RED)));
+				return;
+			}
+			for (Map.Entry<String, JsonElement> e : jsonObj.entrySet()) {
+				buildingWeightOverride.put(e.getKey(), e.getValue().getAsInt());
+			}
+		}
+		
 		World world = sender.getEntityWorld();
 		BuildingContext context = new BuildingContext(world, seed);
 		context.translate(pos.getX(), pos.getY(), pos.getZ());
 		BuildArea area= new BuildArea(policy, range[0], range[1], range[2], range[3]);
+		BuildingLoader.weightOverride = buildingWeightOverride;
 		
 		sender.sendMessage(new TextComponentString("Plan: ").appendText(planName)
 				.appendText("\nRange=").appendText(range[0] + "," + range[1] + "," + range[2] + "," + range[3])
 				.appendText("\nFill policy=").appendText(policy.name())
-				.appendText("\nSeed=").appendText(Long.toString(seed)));
+				.appendText("\nSeed=").appendText(Long.toString(seed))
+				.appendText("\nWeight=").appendText(buildingWeightOverride.isEmpty() ? "default" : arguments.get(WEIGHT)));
 		sender.sendMessage(new TextComponentString("Generating a city. Please wait..."));
 		String res = cityPlan.generate(context, area);
 		sender.sendMessage(new TextComponentString(res).setStyle(new Style().setColor(TextFormatting.AQUA)));
+		
+		BuildingLoader.weightOverride = Object2IntMaps.emptyMap();
 	}
 	
 	public BlockPos toBlockPos(String arg) {

@@ -8,6 +8,7 @@ public class ReloadResult {
 	public int successed = 0;
 	public int failed = 0;
 	public List<String> message = new LinkedList<>();
+	public boolean generatedWeightTemplate;
 	
 	public void success() {
 		this.targetNum++;
